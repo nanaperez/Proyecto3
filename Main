@@ -1,0 +1,49 @@
+# -*- coding: utf-8 -*-
+"""
+Editor de Spyder
+
+Este es un archivo temporal
+"""
+import numpy as np
+
+import csv
+import nltk
+#nltk.download()
+from nltk.tokenize import word_tokenize
+# Import regex
+import re
+
+# Import string
+import string
+
+## Globales
+listaEntrada= []
+listaHashtags = []
+## Metodos
+
+import unicodedata
+def elimina_tildes(s):
+   return ''.join((c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
+   
+def eliminar_puntuacion(s):
+    regex = re.compile('[%s]' % re.escape(string.punctuation))
+    return regex.sub(u'', s)
+    
+def leerFicheroALista(rutaArchivo,listaDestino):
+    with open(rutaArchivo,'r') as archivo:
+        csv.Dialect.skipinitialspace= True
+        csvreader = csv.reader(archivo, delimiter = ';',dialect=csv.excel)
+        for row in csvreader:
+            listaDestino.append(elimina_tildes(row[0].lower().decode('utf8')))
+            
+def Naive(listaInicial):
+    return
+
+if __name__ == "__main__":
+    leerFicheroALista('C:\Users\Familialv\Desktop\\tweets.csv',listaEntrada)
+    leerFicheroALista('C:\Users\Familialv\Desktop\\hashtags.csv',listaHashtags)
+    print listaHashtags
+    from nltk.corpus import stopwords # Import the stop word list
+    lista = stopwords.words("spanish")
+    for palabra in lista:
+        print elimina_tildes(palabra)
