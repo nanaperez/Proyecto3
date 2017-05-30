@@ -22,7 +22,7 @@ listaHashtags = []
 ## Metodos
 
 import unicodedata
-def elimina_tildes(s):
+def eliminar_tildes(s):
    return ''.join((c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn'))
    
 def eliminar_puntuacion(s):
@@ -32,9 +32,9 @@ def eliminar_puntuacion(s):
 def leerFicheroALista(rutaArchivo,listaDestino):
     with open(rutaArchivo,'r') as archivo:
         csv.Dialect.skipinitialspace= True
-        csvreader = csv.reader(archivo, delimiter = ';',dialect=csv.excel)
+        csvreader = csv.reader(archivo, delimiter = ';', dialect=csv.excel)
         for row in csvreader:
-            listaDestino.append(elimina_tildes(row[0].lower().decode('utf8')))
+            listaDestino.append(eliminar_tildes(row[0].lower().decode('utf8')))
             
 def Naive(listaInicial):
     return
@@ -46,4 +46,4 @@ if __name__ == "__main__":
     from nltk.corpus import stopwords # Import the stop word list
     lista = stopwords.words("spanish")
     for palabra in lista:
-        print elimina_tildes(palabra)
+        print eliminar_tildes(palabra)
