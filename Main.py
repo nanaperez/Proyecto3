@@ -17,8 +17,6 @@ from nltk.tokenize import word_tokenize
 import re
 #Import string
 import string
-#Import math
-import math
 
 ## Globales
 listaEntrada = []
@@ -27,11 +25,12 @@ listaHashtags = []
 lista_stop = []
 lista_archivos=['arquitectura','arte','ciudades', 'danza', 'escultura', 
 'festivales', 'fotografia','galerias', 'gastronomia', 'graffitis', 
-'literatura', 'museo', 'musica','pintura', 'poesia', 'teatro','Hashtags']
-# Arquitectura, arte, ciudades, danza escultura, festivales, fotografia,galerias
-#, gastronomia, graffitis, literatura, museo, musica,pintura, poesia, teatro,
-#Hashtags
+'literatura', 'museo', 'musica','pintura', 'poesia', 'teatro','hashtags']
+# Arquitectura, arte, ciudades, danza escultura, festivales, fotografia,
+# galerias, gastronomia, graffitis, literatura, museo, musica,pintura, 
+# poesia, teatro, hashtags
 matriz_clasificaciones = []
+
 ## Metodos
 #funcion que elimina las tildes de las palabras
 def eliminar_tildes(s):
@@ -142,6 +141,7 @@ def predict(model, x):
     probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
     return np.argmax(probs, axis=1)
 
+#Main del programa
 if __name__ == "__main__":
     cargar_stop_words(lista_stop)
     leerFicheroALista('tweets.csv',listaEntrada)
@@ -149,6 +149,7 @@ if __name__ == "__main__":
     for archivo in lista_archivos:
         clasificar(matriz_clasificaciones,listaEntrada,archivo+'.csv',archivo)
     lista_label.remove(0)
+    #print(matriz_clasificaciones)
     #print(listaEntrada)
     del lista_stop
     modelo = red_magica(matriz_clasificaciones,lista_label)
