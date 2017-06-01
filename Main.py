@@ -46,18 +46,22 @@ def eliminar_puntuacion(s):
 #funcion que lee un fichero y lo convierte en lista  
 def leerFicheroALista(rutaArchivo,listaDestino):
     with open(rutaArchivo,'r',encoding="ISO-8859-1") as archivo:
-        csv.Dialect.skipinitialspace= True
         csvreader = csv.reader(archivo, delimiter = ';')
         for row in csvreader:
             listaDestino.append(limpiar_texto(row[0]))
             if len(row) >= 2:
-                lista_label.append(limpiar_texto(row[1]))
+                opcion = limpiar_texto(row[1])
+                if opcion == 'seleccionado':
+                    lista_label.append(1)
+                else:
+                    lista_label.append(0)
+                #lista_label.append(limpiar_texto(row[1]))
 
 #Funcion para una clasificacion a fuerza bruta
 def clasificar(matriz,lista_tweets,url_archivo,categoria):
     conjunto= set()
     lista_categoria=[]
-    lista_categoria.append(categoria)
+    #lista_categoria.append(categoria)
     contador = 0
     with open(url_archivo,'r',encoding="ISO-8859-1") as archivo:
         csvreader = csv.reader(archivo, delimiter = ';')
@@ -89,90 +93,65 @@ def cargar_stop_words(lista):
     listaTemporal = stopwords.words("spanish")
     for palabra in listaTemporal:
         lista.append(eliminar_tildes(palabra))
- 
-#funcion que separa las instancias con clasificacion invalida    
-"""
-def clasificaciones_invalidas(instancias, clases_invalidas=["null"], ind_clase=0):
+        
+def nonlin(x,deriv=False):
+    if(deriv==True):
+        return x*(1-x)
+    return 1/(1+np.exp(-x))
 
-    Separamos las instancias con una clasificacion valida de las que no la tienen.
-    :param instancias: Instancias a separar.
-    :param ind_clase: Indice de la instancia que contiene su clasificacion.
-    :param clases_invalidas: Valores de clasificacion invalidos.
-    
-    invalidas = []
-    for c in instancias:
-        if (c[ind_clase] in clases_invalidas):
-            instancias.append(c)
-            instancias.remove(c)
-    return invalidas, instancias
+def red_magica(datos,respuestas):
+    #Input dataset
+    x = np.array(datos,dtype='float64').T
+    #Answers
+    y = np.array(respuestas,dtype='float64')
+    np.random.seed(1)
+    #w1
+    syn0 = 2*np.random.random((17,4)) - 1
+    #w2
+    syn1 = 2*np.random.random((4,794)) - 1
+    entregar = {}
+    for j in range(600):
+        #Input layer
+        l0 = x
+        #Hidden layer
+        l1 = nonlin(np.dot(l0,syn0))
+        #Output layer
+        l2 = nonlin(np.dot(l1,syn1))
+        l2_error = y - l2
+        if (j% 100) == 0:
+            print("Error:" + str(np.mean(np.abs(l2_error))))
+            #print(l2)
+        l2_delta = l2_error*nonlin(l2,deriv=True)
+        l1_error = l2_delta.dot(syn1.T)
+        l1_delta = l1_error * nonlin(l1,deriv=True)
+        syn1 += l1.T.dot(l2_delta)
+        syn0 += l0.T.dot(l1_delta)
+        entregar["w1"] = syn0
+        entregar["w2"] = syn1
+        entregar["b1"] = l1
+        entregar["b2"] = l2
+    return entregar
 
-#funcion que extrae las caracteristicas de un texto
-def rasgos_del_texto(texto, listado_palabras):
-    if(not texto):
-        print("Texto nulo")
-        return None
-    palabras_del_texto = set(texto)
-    caracteristicas = {}
-    for p in listado_palabras:
-        caracteristicas['contiene({})'.format(p)] = (p in palabras_del_texto)
-    return caracteristicas
+def predict(model, x):
+    W1, b1, W2, b2 = model['w1'], model['b1'], model['w2'], model['b2']
+    # Forward propagation
+    z1 = x.dot(W1) + b1
+    a1 = np.tanh(z1)
+    z2 = a1.dot(W2) + b2
+    exp_scores = np.exp(z2)
+    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+    return np.argmax(probs, axis=1)
 
-#funcion que retorna un listado de las palabras comunes
-def listado_palabras(instancias, ind_texto=1, ind_clase=0, invalidos=["null"]):
-    conjunto_palabras = clas.cadena_de_palabras(instancias, [2])
-    conjunto_palabras = nltk.word_tokenize(conjunto_palabras)
-    
-    #print conjunto_palabras
-    
-    listado_palabras = nltk.FreqDist(w.lower() for w in conjunto_palabras)
-    
-    return listado_palabras
-
-#funcion que clasifica una instancia en base a las palabras comunes que contiene
-def clasificacion_binaria_palabras(dist_frec, instancias, n, clases_invalidas):
-    
-    :param distr_frec: Ruta del CSV con las instancias a clasificar.
-    :param n: Numero de palabras mas comunes a tener en cuenta.
-    :param clases_invalidas: Las instancias que las tengan no estan clasificadas.
-    
-    #escogemos las N palabras mas comunes
-    mas_comunes = list(dist_frec)[:n]
-    
-    invalidas, validas = clas.clasificaciones_invalidas(instancias, clases_invalidas)
-    #A partir de un texto, creamos un hash con las caracteristicas de dicho texto.
-    inst_validas = [(clas.rasgos_del_texto(d, mas_comunes), c) for (c, t, d) in validas]
-    inst_invalidas = [(clas.rasgos_del_texto(d, mas_comunes), c) for (c, t, d) in invalidas]
-    half = math.floor(len(instancias) / 2)
-    train_set , test_set = inst_validas [:half], inst_invalidas[half:]
-    # train_set , test_set = inst_validas , inst_invalidas
-    classifier = nltk.NaiveBayesClassifier.train(train_set)
-    
-    resultado = {}
-    resultado['precision'] = nltk.classify.accuracy(classifier, test_set)
-    return resultado
-"""
-
-
-#funcion bag of words
-def bag_of_words():
-    from sklearn.feature_extraction.text import CountVectorizer
-    vectorizer = CountVectorizer()
-    #data
-    bag_of_words = vectorizer.fit(data)
-    bag_of_words = vectorizer.transform(data)
-    print (bag_of_words)
-    print (vectorizer.vocabulary_get("cultura"))
-    
-#funcion donde se utiliza Naive_Bayes classificator
-def Naive(listaInicial):
-    return
- 
 if __name__ == "__main__":
     cargar_stop_words(lista_stop)
     leerFicheroALista('tweets.csv',listaEntrada)
     leerFicheroALista('hashtags.csv',listaHashtags)
-#    print(listaHashtags)
-#    print(len(listaEntrada))
     for archivo in lista_archivos:
         clasificar(matriz_clasificaciones,listaEntrada,archivo+'.csv',archivo)
-    print(matriz_clasificaciones)
+    lista_label.remove(0)
+    #print(listaEntrada)
+    del lista_stop
+    modelo = red_magica(matriz_clasificaciones,lista_label)
+    print(modelo)
+    ejemplo = [0.6,]
+    print(predict(modelo,np.random.random((17,1))))
