@@ -3,7 +3,7 @@
 Alejandra Perez
 Python 3
 """
-
+## Imports
 import time
 #Import numpy
 import numpy as np
@@ -21,6 +21,12 @@ import re
 import random
 import math
 random.seed = 0
+#Imports para clasificador NB
+import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.cross_validation import train_test_split
+from sklearn.naive_bayes import MultinomialNB
+
 ## Globales
 listaEntrada = []
 lista_label = []
@@ -77,7 +83,38 @@ def clasificar(matriz,lista_tweets,url_archivo,categoria):
         lista_categoria.append(peso)
         contador = 0
     matriz.append(lista_categoria)
+
+#funcion para una clasificacion con Multinomial de Naive Bayes
+def otro_clasificar():    
+    df=pd.read_csv('tweets.csv',sep=';',names=['Texto','Label'],encoding='ISO-8859-1')
+    df.head()
+    df.loc[df["Label"]=='Seleccionado',"Label",]=1
+    df.loc[df["Label"]=='no seleccionado',"Label",]=0
+    df.head()
+    #print(df)
     
+    df_x = df["Texto"]
+    df_y = df["Label"]
+    x_train, x_test, y_train, y_test = train_test_split(df_x, df_y, test_size=0.2, random_state=4)
+    x_train.head()
+    #print(x_train)
+    cv1 = CountVectorizer()
+    x_traincv=cv1.fit_transform(x_train)
+    x_testcv=cv1.transform(x_test)
+    mnb = MultinomialNB()
+    y_train=y_train.astype('int')
+    mnb.fit(x_traincv,y_train)
+    #print(mnb)
+    predictions=mnb.predict(x_testcv)
+    #print(predictions)
+    a=np.array(y_test)
+    #print(a)
+    count=0
+    for i in range (len(predictions)):
+        if predictions[i]==a[i]:
+            count=count+1
+    print(count / len(predictions))
+
 #funcion para limpiar el texto                
 def limpiar_texto(texto):
     texto = texto.lower()
@@ -373,6 +410,7 @@ if __name__ == "__main__":
     del listaHashtags
     #print(matriz1)
     #print(listaEntrada)
+    #otro_clasificar()
     del lista_stop
     #print(matriz1)
     #Neural
