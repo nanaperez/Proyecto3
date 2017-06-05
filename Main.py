@@ -79,7 +79,7 @@ def clasificar(matriz,lista_tweets,url_archivo,categoria):
             if palabra in tweet:
                 contador = contador + 1
         #Check
-        peso= 40*(contador / len(tweet.split(sep=' '))) - 20.0
+        peso= 20.0 *(contador / len(tweet.split(sep=' '))) - 10.0
         lista_categoria.append(peso)
         contador = 0
     matriz.append(lista_categoria)
@@ -132,7 +132,7 @@ def cargar_stop_words(lista):
 #Class variables
 class RedNeuronal:
     def __init__(self,numEntradas,numOcultas,numSalidas):
-        self.numEntradas = numEntradas
+        self.numEntradas = numEntradas-2
         self.numOcultas = numOcultas
         self.numSalidas = numSalidas
         self.entradas = [0.0] * numEntradas
@@ -147,7 +147,7 @@ class RedNeuronal:
     def hacer_matriz(self,filas, columnas, valor):
         resultado = [None]* filas
         for i in range(0,filas):
-            resultado[i] = [None]*columnas
+            resultado[i] = [0.0]*columnas
         for j in range(0,filas):
             for k in range(0,columnas):
                 resultado[j][k]=valor
@@ -168,55 +168,57 @@ class RedNeuronal:
         k = 0
         for i in range(0,self.numEntradas):
             for j in range(0,self.numOcultas):
-                #k = k+1
-                self.EOPesos[i][j] = pesos[k+1]
+                self.EOPesos[i][j] = pesos[k]
+                k = k+1
         for i in range(0,self.numOcultas):
-            #k = k+1
-            self.OBiases[i] = pesos[k+1]
+            self.OBiases[i] = pesos[k]
+            k = k+1
         for i in range(0,self.numOcultas):
             for j in range(0,self.numSalidas):
-                #k = k+1
-                self.OSPesos[i][j] = pesos[k+1]
+                self.OSPesos[i][j] = pesos[k]
+                k = k+1
         for i in range(0,self.numSalidas):
-            #k = k + 1
+            
             #print(k)
             #print(i)
-            self.SBiases[i] = pesos[k+1]
-            
+            self.SBiases[i] = pesos[k]
+            k = k + 1
     def get_pesos(self):
         numPesos =  (self.numEntradas*self.numOcultas) + (self.numOcultas * self.numSalidas) + self.numOcultas + self.numSalidas
-        resultado = [numPesos]
-        k = 0
-        for i in range(0,len(self.EOPesos)):
-            for j in range(0,len(self.EOPesos[0])):
-                k = k+1
+        resultado = [0.0]* numPesos
+        k = 0      
+        for i in range(0,self.numEntradas):
+            for j in range(0,self.numOcultas):
                 resultado[k] = self.EOPesos[i][j]
-        for i in range(0,len(self.OBiases)):
-            k = k+1
-            resultado[k]= self.OBiases[i]
-        for i in range(0,len(self.OSPesos)):
-            for j in range(0,len(self.OSPesos[0])):
                 k = k+1
+        for i in range(0,self.numOcultas):
+            resultado[k]= self.OBiases[i]
+            k = k+1
+        for i in range(0,self.numOcultas):
+            for j in range(0,self.numSalidas):
                 resultado[k]=self.OSPesos[i][j]
-        for i in range(0,self.SBiases):
-            k = k + 1
+                k = k+1
+        for i in range(0,self.numSalidas):
+           
             resultado[k] = self.SBiases[i]
+            k = k + 1
         return resultado
     
     def computar_salida(self,xvalores):
         hSums = [0.0]*self.numOcultas
         oSums = [0.0] * self.numSalidas
-        self.entradas = list(xvalores)
+        for i in range(0,len(xvalores)):
+            self.entradas[i] = xvalores[i]
         for j in range(0,self.numOcultas):
             for i in range(0,self.numEntradas):
                 hSums[j] += self.entradas[i]*self.EOPesos[i][j]
         for i in range(0,self.numOcultas):
-            hSums[i] =  hSums[i] + self.OBiases[i]
+            hSums[i] += self.OBiases[i]
         for i in range(0,self.numOcultas):
             self.OSalidas[i] = self.hyper_tan(hSums[i])
         for j in range(0,self.numSalidas):
             for i in range(0,self.numOcultas):
-                oSums[j] += self.OSalidas[i] * self.OSPesos[i][j]
+                oSums[j] += (self.OSalidas[i] * self.OSPesos[i][j])
         for i in range(0, self.numSalidas):
             oSums[i] += self.SBiases[i]
         softOut = self.softmax(oSums)
@@ -232,30 +234,29 @@ class RedNeuronal:
             return math.tanh(x)
     def softmax(self,oSums):
         suma = 0.0
+        for i in range(0,len(oSums)):            
+            suma += math.exp(oSums[i])
+        result = [0.0]* len(oSums)
         for i in range(0,len(oSums)):
-            suma += math.exp(oSums[1])
-        result = [None]* len(oSums)
-        for i in range(0,len(oSums)):
-            print(oSums)
-            result[i] = math.exp(round(oSums[i],1)) / suma
+            result[i] = math.exp(oSums[i]) / suma
         return result
     def train(self,trainData,maxEpochs,learnRate,momentum):
         hoGrads = self.hacer_matriz(self.numOcultas,self.numSalidas,0.0)
-        obGrads = [None]* self.numSalidas
+        obGrads = [0.0]* self.numSalidas
         ihGrads = self.hacer_matriz(self.numEntradas,self.numOcultas,0.0)
-        hbGrads = [None] * self.numOcultas
-        oSignals = [None] * self.numSalidas
-        hSignals = [None] * self.numOcultas
+        hbGrads = [0.0] * self.numOcultas
+        oSignals = [0.0] * self.numSalidas
+        hSignals = [0.0] * self.numOcultas
         ihPrevWeightsDelta = self.hacer_matriz(self.numEntradas,self.numOcultas,0.0)
         hPrevBiaseseDelta = [0.0] * self.numOcultas
         hoPrevWeightsDelta = self.hacer_matriz(self.numOcultas,self.numSalidas,0.0)
         oPrevBiasesDelta = [0.0] * self.numSalidas
         epoch = 0
-        xValues = [None] * self.numEntradas
-        tValues = [None]* self.numSalidas
+        xValues = [0.0] * self.numEntradas
+        tValues = [0.0]* self.numSalidas
         derivative = 0.0
         errorSignal = 0.0
-        sequence = [None]* len(trainData)
+        sequence = [0.0]* len(trainData)
         for i in range(0,len(sequence)):
             sequence[i] = i
         errInterval = maxEpochs / 10
@@ -263,13 +264,12 @@ class RedNeuronal:
             epoch += 1
             if epoch % errInterval == 0 and epoch < maxEpochs:
                 trainErr = self.Error(trainData)
-                print("epoch = "+epoch + " error = "+trainErr)
+                print("epoch = "+str(epoch) + " error = "+str(trainErr))
             self.Shuffle(sequence)
             for ii in range(0,len(trainData)):
                 idx = sequence[ii]
                 xValues = list(trainData[idx])
-                tValues = list(trainData[idx][self.numEntradas-2:])
-            
+                tValues = list(trainData[idx][self.numEntradas:])
                 self.computar_salida(xValues)
                 for k in range(0,self.numSalidas):
                     errorSignal = tValues[k] - self.salidas[k]
@@ -301,7 +301,7 @@ class RedNeuronal:
                 for j in range(0,self.numOcultas):
                     delta = hbGrads[j] * learnRate
                     self.OBiases[j] += delta
-                    self.OBiases[j] += hPrevBiaseseDelta[j]*momentum
+                    self.OBiases[j] += hPrevBiaseseDelta[j] * momentum
                     hPrevBiaseseDelta[j] = delta
                 for j in range(0,self.numOcultas):
                     for k in range(0,self.numSalidas):
@@ -325,8 +325,8 @@ class RedNeuronal:
             sequence[i] = tmp
     def Error(self,trainData):
         sumSquaredError = 0.0
-        xValues = [self.numEntradas]
-        tValues = [self.numSalidas]
+        xValues = [0.0]*self.numEntradas
+        tValues = [0.0]* self.numSalidas
         for i in range(0,len(trainData)):
             xValues = list(trainData[i])
             tValues = list(trainData[i][self.numEntradas:])
@@ -417,14 +417,14 @@ if __name__ == "__main__":
     numero_features = len(matriz1[0])
     lista_train = []
     lista_test = []
-    split_data(matriz1,0.7,lista_train,lista_test)
+    split_data(matriz1,0.8,lista_train,lista_test)
     #print(len(lista_test))
-    numNodosHidden=5
+    numNodosHidden=7
     numSalidas=2
     semilla=1
     red = RedNeuronal(numero_features,numNodosHidden,numSalidas)
-    epocasMaximas = 1000
-    learnRate = 0.05
-    momentun = 0.01
+    epocasMaximas = 200
+    learnRate = 0.005
+    momentun = 0.001
     pesos = red.train(matriz1,epocasMaximas,learnRate,momentun)
     print(pesos)    
