@@ -79,7 +79,7 @@ def clasificar(matriz,lista_tweets,url_archivo,categoria):
             if palabra in tweet:
                 contador = contador + 1
         #Check
-        peso= 20.0 *(contador / len(tweet.split(sep=' '))) - 10.0
+        peso= ((contador / len(tweet.split(sep=' ')))*10)
         lista_categoria.append(peso)
         contador = 0
     matriz.append(lista_categoria)
@@ -178,9 +178,6 @@ class RedNeuronal:
                 self.OSPesos[i][j] = pesos[k]
                 k = k+1
         for i in range(0,self.numSalidas):
-            
-            #print(k)
-            #print(i)
             self.SBiases[i] = pesos[k]
             k = k + 1
     def get_pesos(self):
@@ -218,7 +215,7 @@ class RedNeuronal:
             self.OSalidas[i] = self.hyper_tan(hSums[i])
         for j in range(0,self.numSalidas):
             for i in range(0,self.numOcultas):
-                oSums[j] += (self.OSalidas[i] * self.OSPesos[i][j])
+                oSums[j] += self.OSalidas[i] * self.OSPesos[i][j]
         for i in range(0, self.numSalidas):
             oSums[i] += self.SBiases[i]
         softOut = self.softmax(oSums)
@@ -268,7 +265,7 @@ class RedNeuronal:
             self.Shuffle(sequence)
             for ii in range(0,len(trainData)):
                 idx = sequence[ii]
-                xValues = list(trainData[idx])
+                xValues = list(trainData[idx][:self.numEntradas])
                 tValues = list(trainData[idx][self.numEntradas:])
                 self.computar_salida(xValues)
                 for k in range(0,self.numSalidas):
@@ -284,7 +281,7 @@ class RedNeuronal:
                 for j in range(0,self.numOcultas):
                     derivative = (1+self.OSalidas[j])*(1-self.OSalidas[j])
                     suma = 0.0
-                    for k in range(self.numSalidas):
+                    for k in range(0,self.numSalidas):
                         suma += oSignals[k] * self.OSPesos[j][k]
                     hSignals[j] = derivative * suma
                 for i in range(0,self.numEntradas):
@@ -338,11 +335,11 @@ class RedNeuronal:
     def Accuracy(self,testData):
         numCorrect = 0
         numWrong = 0
-        xValues = [self.numEntradas]
-        tValues = [self.numSalidas]
+        xValues = [0.0]*self.numEntradas
+        tValues = [0.0]*self.numSalidas
         yValues = []
         for i in range(0,len(testData)):
-            xValues = list(testData[i])
+            xValues = list(testData[i][:self.numEntradas])
             tValues = list(testData[i][self.numEntradas:])
             yValues = self.computar_salida(xValues)
             maxIndex = self.MaxIndex(yValues)
@@ -350,9 +347,10 @@ class RedNeuronal:
             if maxIndex == tMaxIndex:
                 numCorrect += 1
             else:
-                numWrong += 0
+                numWrong += 1
         return (numCorrect*1.0) / (numWrong+numCorrect)
     def MaxIndex(self,vector):
+        print(vector)
         granIndice = 0
         mayorValor = vector[0]
         for i in range(0,len(vector)):
@@ -419,12 +417,17 @@ if __name__ == "__main__":
     lista_test = []
     split_data(matriz1,0.8,lista_train,lista_test)
     #print(len(lista_test))
-    numNodosHidden=7
+    numNodosHidden=5
     numSalidas=2
     semilla=1
     red = RedNeuronal(numero_features,numNodosHidden,numSalidas)
     epocasMaximas = 200
-    learnRate = 0.005
-    momentun = 0.001
+    learnRate = 0.05
+    momentun = 0.01
     pesos = red.train(matriz1,epocasMaximas,learnRate,momentun)
-    print(pesos)    
+    #print(pesos)
+    accuracy_test = 0.0
+    accuracy_test = red.Accuracy(lista_test)
+    print("certitud en test: "+str(accuracy_test))
+    
+    
