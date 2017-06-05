@@ -349,6 +349,14 @@ class RedNeuronal:
             else:
                 numWrong += 1
         return (numCorrect*1.0) / (numWrong+numCorrect)
+    def Evaluar(self,testData):
+        xValues = [0.0]*self.numEntradas
+        yValues = []
+        for i in range(0,len(testData)):
+            xValues = list(testData[i][:self.numEntradas])
+            yValues = self.computar_salida(xValues)
+            maxIndex = self.MaxIndex(yValues)
+            
     def MaxIndex(self,vector):
         print(vector)
         granIndice = 0
@@ -402,14 +410,10 @@ if __name__ == "__main__":
     for archivo in lista_archivos:
         clasificar(matriz_clasificaciones,listaEntrada,archivo+'.csv',archivo)
     matriz1 =preparar_matriz(matriz_clasificaciones,lista_label)
-    del matriz_clasificaciones
-    del lista_label
-    del listaEntrada
-    del listaHashtags
+
     #print(matriz1)
     #print(listaEntrada)
     #otro_clasificar()
-    del lista_stop
     #print(matriz1)
     #Neural
     numero_features = len(matriz1[0])
@@ -429,5 +433,12 @@ if __name__ == "__main__":
     accuracy_test = 0.0
     accuracy_test = red.Accuracy(lista_test)
     print("certitud en test: "+str(accuracy_test))
-    
+    ##Real
+    print("Archivo real: ")
+    listaEntrada.clear()
+    leerFicheroALista("prueba.csv",listaEntrada)
+    for archivo in lista_archivos:
+        clasificar(matriz_clasificaciones,listaEntrada,archivo+'.csv',archivo)
+    matriz2 =preparar_matriz(matriz_clasificaciones,lista_label)
+    red.Evaluar(matriz2)
     
